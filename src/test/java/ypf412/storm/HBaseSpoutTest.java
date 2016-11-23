@@ -20,8 +20,8 @@ import ypf412.storm.spout.HBaseSpout;
 import ypf412.storm.util.Constants;
 import ypf412.storm.util.PropConfig;
 
-import backtype.storm.topology.TopologyBuilder;
-import backtype.storm.tuple.Fields;
+import org.apache.storm.topology.TopologyBuilder;
+import org.apache.storm.tuple.Fields;
 
 public class HBaseSpoutTest {
 

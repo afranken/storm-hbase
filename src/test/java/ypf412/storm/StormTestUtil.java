@@ -14,20 +14,21 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.hadoop.hbase.util.Bytes;
 
-import backtype.storm.Config;
-import backtype.storm.LocalCluster;
-import backtype.storm.generated.KillOptions;
-import backtype.storm.spout.SpoutOutputCollector;
-import backtype.storm.task.OutputCollector;
-import backtype.storm.task.TopologyContext;
-import backtype.storm.topology.OutputFieldsDeclarer;
-import backtype.storm.topology.TopologyBuilder;
-import backtype.storm.topology.base.BaseRichBolt;
-import backtype.storm.topology.base.BaseRichSpout;
-import backtype.storm.tuple.Fields;
-import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
-import backtype.storm.utils.Utils;
+import org.apache.storm.Config;
+import org.apache.storm.LocalCluster;
+import org.apache.storm.generated.KillOptions;
+import org.apache.storm.spout.SpoutOutputCollector;
+import org.apache.storm.task.OutputCollector;
+import org.apache.storm.task.TopologyContext;
+import org.apache.storm.topology.OutputFieldsDeclarer;
+import org.apache.storm.topology.TopologyBuilder;
+import org.apache.storm.topology.base.BaseRichBolt;
+import org.apache.storm.topology.base.BaseRichSpout;
+import org.apache.storm.tuple.Fields;
+import org.apache.storm.tuple.Tuple;
+import org.apache.storm.tuple.TupleImpl;
+import org.apache.storm.tuple.Values;
+import org.apache.storm.utils.Utils;
 
 import ypf412.storm.util.StreamData;
 
@@ -274,26 +275,27 @@ public class StormTestUtil {
 
 		@Override
 		public void execute(Tuple input) {
-			List<Object> fields = input.getValues();
+			TupleImpl input2 = (TupleImpl) input; // cast to make #nth available.
+			List<Object> fields = input2.getValues();
 			Short sharding = (Short)fields.get(0);
 
 			List<Object[]> list = data.get(sharding);
 			int idx = index[sharding] % list.size();
 			index[sharding]++;
 			Object[] exp = list.get(idx);
-			assertEquals(exp.length, input.size());
+			assertEquals(exp.length, input2.size());
 
 			for (int i = 0; i < exp.length; i++) {
 				if (exp[i].getClass() == byte[].class) { // deal with byte array object
-					assertEquals(byte[].class, input.nth(i).getClass());
+					assertEquals(byte[].class, input2.nth(i).getClass());
 					assertTrue(Bytes.compareTo((byte[]) exp[i],
-							(byte[]) input.nth(i)) == 0);
+							(byte[]) input2.nth(i)) == 0);
 				} else if (exp[i].getClass() == StreamData.class) {
 					byte[] expBytes = ((StreamData)exp[i]).getData(); // deal with StreamData object
-					byte[] tupBytes = ((StreamData)input.nth(i)).getData();
+					byte[] tupBytes = ((StreamData)input2.nth(i)).getData();
 					assertTrue(Bytes.compareTo(expBytes, tupBytes) == 0);
 				} else { // other type object
-					assertEquals(exp[i], input.nth(i));
+					assertEquals(exp[i], input2.nth(i));
 				}
 			}
 		}
